@@ -6,9 +6,10 @@
 
 // global vars
 "use strict";
-var theScore=0;
-var newX=200;
-var newY=425;  // initial x and y cooodinates to place player at bottom center
+var newX = 203;
+var newY = 416;
+var theScore = 0;
+var NUM_ENEMIES = 3;
 
 //
 // Constructor for enemy class
@@ -18,16 +19,26 @@ var Enemy = function() {
 
     // enemy enters from the left and in a random row
     this.x = 0;
-    var row = Math.floor((Math.random() * 3) + 1);
-    switch(row) {
-        case 1:  this.y = 60;  break;  //row 1
-        case 2:  this.y = 145; break;  //row 2
-        case 3:  this.y = 230; break;  //row 3
-    }
+    this.y = pickARow();
 
     // set a random speed in pixels per second
     this.enemySpeed = Math.floor((Math.random() * 400) + 100);
 };
+
+function pickARow() {
+    var yAxis = 230;
+    var row = Math.floor((Math.random() * 3) + 1);
+
+//water y a-xis 1
+//payment rows y-axis: 84, 167, 250,
+//grass rows y_axis: 333, 416
+    switch(row) {
+        case 1:  yAxis = 84;  break;  //row 1
+        case 2:  yAxis = 167; break;  //row 2
+        case 3:  yAxis = 250; break;  //row 3
+    }
+    return(yAxis);
+}
 
 //
 // Update the enemy's position
@@ -38,14 +49,9 @@ Enemy.prototype.update = function(dt) {
     // and reset random speed and row
     if (this.x > 505 ) {
         this.x = -300;
+        this.y = pickARow();
         this.enemySpeed = Math.floor((Math.random() * 400) + 100);
-        var row = Math.floor((Math.random() * 3) + 1);
-        switch(row) {
-            case 1:  this.y = 60;  break;  //row 1
-            case 2:  this.y = 145; break;  //row 2
-            case 3:  this.y = 230; break;  //row 3
-            default: this.y = 60;  break;  //row 1
-        }
+
     } else {
         // Movement multiplied by the dt parameter
         // to ensure the game runs at the same speed on all computers.
@@ -62,7 +68,8 @@ Enemy.prototype.checkCollision = function() {
     // the players sprite, then decrement the score and reset the player
     // to starting position
     if (this.y === player.y) {
-        if (this.x+50.5 > player.y-50.5 && this.x-50.5 < player.y+10.5) {
+        if (this.x+100 > player.x && this.x < player.x+100) {
+            //console.log('enemy x=' + this.x + ' player x=' + player.x);
             theScore--;
             document.getElementById('score').innerHTML = theScore;
             document.getElementById('ouch').play();
@@ -88,7 +95,7 @@ Enemy.prototype.render = function() {
 //
 var Player = function() {
     this.sprite = 'images/char-pink-girl.png';
-    this.x = 200;
+    this.x = 203;
     this.y = 425;
 };
 
@@ -96,6 +103,7 @@ Player.prototype.update = function() {
     // change player position based on handleInput()
     this.x = newX;
     this.y = newY;
+    //this.checkCollision();
 };
 
 //
@@ -110,8 +118,8 @@ Player.prototype.render = function() {
 //
 Player.prototype.reset = function() {
     // reset player to the starting position
-    newX = 200;
-    newY = 425;
+    newX = 203;
+    newY = 416;
 };
 
 //
@@ -123,79 +131,56 @@ Player.prototype.handleInput = function(key) {
         case 'up':
             // Increment the score and reset the player position to start
             // whenever player reaches the water row
-            if (this.y == 0) {
+            // rows y-axis: 1, 84, 167, 250, 333, 416
+            if (this.y < 84) {
                 theScore++;
                 document.getElementById('score').innerHTML = theScore;
                 document.getElementById('yea').play();
                 this.reset();
             } else {  // move player up 1 row
-                newX=this.x;
-
-                switch(this.y) {
-                    case 425:
-                        newY = 325;
-                        break;
-                    case 325:
-                        newY = 230;
-                        break;
-                    case 230:
-                        newY = 145;
-                        break;
-                    case 145:
-                        newY = 60;
-                        break;
-                    case 60:
-                        newY = 0;
-                        break;
-                }
+                newX = this.x;
+                newY = this.y - 83;
                 player.update();
             }
             break;
 
         case 'down':
             // Make sure we don't go past the bottom
-            if (this.y >= 425) {
-                newY = 425;
+            if (this.y >= 416) {
+                newY = 416;
             } else {  // move player down 1 row
                 newX=this.x;
-                switch(this.y) {
-                    case 325:
-                        newY = 425;
-                        break;
-                    case 230:
-                        newY = 325;
-                        break;
-                    case 145:
-                        newY = 230;
-                        break;
-                    case 60:
-                        newY = 145;
-                        break;
-                    case 0:
-                        newY = 60;
-                        break;
-                }
+                newY = this.y + 83;
                 this.update();
             }
             break;
 
+// Columns
+// 1: 001-101
+// 2: 102-202
+// 3: 203-303
+// 4: 304-404
+// 5: 405-505
 
         case 'right':
             newY = this.y;
-            newX = this.x + 101;
             // Make sure we don't go past the right border
-            if (this.x > 400) {
-                newX = 400;
+            if (this.x >= 405) {
+                newX = 405;
+            } else {
+                newX = this.x + 101;
             }
             player.update();
             break;
 
         case 'left':
             newY=this.y;
-            newX = this.x - 101;
+
             // Make sure we don't go past the left border
-            if (this.x < 0) {
-                newX = 0;
+            if (this.x <= 1) {
+                newX = 1;
+            } else {
+                newX = this.x - 101;
             }
             player.update();
             break;
@@ -206,16 +191,16 @@ Player.prototype.handleInput = function(key) {
 
 //
 // Instantiate enemy and player objects.
-// Enemy objects in placed in the allEnemies array
+// Enemy objects are placed in the allEnemies array
 //
 var audio = new Audio('sounds/start.mp3');
-audio.play();
-
 var player = new Player();
-var enemy1 = new Enemy();
-var enemy2 = new Enemy();
-var enemy3 = new Enemy();
-var allEnemies = [enemy1, enemy2, enemy3];
+var allEnemies = [];
+
+audio.play();
+for (var cnt=0; cnt<NUM_ENEMIES; cnt++) {
+    allEnemies.push(new Enemy());
+}
 
 
 //
